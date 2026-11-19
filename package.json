@@ -1,0 +1,24 @@
+{
+    "name":  "dsh-computer-use",
+    "version":  "0.3.0",
+    "private":  true,
+    "description":  "DSH 电脑控制插件：通过自实现的跨平台桌面自动化后端检查并操作本地桌面应用窗口——枚举应用、读取无障碍元素树、按索引/路径精确定位、点击、输入、按键、滚动、拖拽、截图，并在动作后等待/校验界面是否真的变化（Windows 后端含状态缓存、新鲜度校验、审计与黑名单）。",
+    "license":  "Apache-2.0",
+    "type":  "module",
+    "bin":  {
+                "dsh-computer-use":  "scripts/computer-control.mjs"
+            },
+    "engines":  {
+                    "node":  "\u003e=18"
+                },
+    "scripts":  {
+                    "test":  "node --test scripts/tests/*.test.mjs",
+                    "capture:snapshots":  "node training/scripts/capture-snapshots.mjs"
+                },
+    "files":  [
+                  "SKILL.md",
+                  "README.md",
+                  "scripts",
+                  "references"
+              ]
+}

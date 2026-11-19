@@ -1,0 +1,24 @@
+# Dependencies & build caches
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secrets & local env
+.env
+.env.*
+
+# Generated large datasets & raw captures (reproducible via scripts)
+training/data/sft_train.jsonl
+training/data/sft_eval.jsonl
+training/data/raw_*.jsonl
+training/data/trajectories*.jsonl
+training/checkpoints/
+training/outputs/
+
+# Temporary screenshots & logs
+shot*.png
+*.log
+.DS_Store
+Thumbs.db
