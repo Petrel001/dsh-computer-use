@@ -776,14 +776,49 @@ function Write-ZccTrajectory {
             if ($Result.keys) { $entry.keys = $Result.keys }
             if ($Result.direction) { $entry.direction = $Result.direction }
             if ($null -ne $Result.amount) { $entry.amount = $Result.amount }
-            if ($Result.verification) { $entry.verification = $Result.verification }
+            $includeText = ($env:CUA_TRAJECTORY_INCLUDE_TEXT -eq '1')
+            $paramText = $null
+            if ($null -ne $script:ZccCurrentParams -and $null -ne $script:ZccCurrentParams.text) {
+                $paramText = [string]$script:ZccCurrentParams.text
+            }
+            $redactNeedles = @()
+            if (-not $includeText -and -not [string]::IsNullOrEmpty($paramText)) {
+                $flatParam = ($paramText -replace '[\r\n]+', ' ')
+                $shortParam = if ($flatParam.Length -gt 80) { $flatParam.Substring(0, 77) + '...' } else { $flatParam }
+                foreach ($cand in @($paramText, $flatParam, $shortParam)) {
+                    if (-not [string]::IsNullOrEmpty($cand) -and -not ($redactNeedles -contains $cand)) {
+                        $redactNeedles += $cand
+                    }
+                }
+            }
+            if ($Result.verification) {
+                if ($redactNeedles.Count -gt 0 -and ($Result.verification -is [System.Collections.IDictionary]) -and $Result.verification.Contains('element') -and ($Result.verification.element -is [System.Collections.IDictionary])) {
+                    $verCopy = [ordered]@{}
+                    foreach ($k in $Result.verification.Keys) { $verCopy[$k] = $Result.verification[$k] }
+                    $elCopy = [ordered]@{}
+                    foreach ($k in $Result.verification.element.Keys) { $elCopy[$k] = $Result.verification.element[$k] }
+                    if ($elCopy.Contains('value') -and $null -ne $elCopy.value) {
+                        $redVal = [string]$elCopy.value
+                        foreach ($needle in $redactNeedles) { $redVal = $redVal.Replace($needle, '[REDACTED]') }
+                        $elCopy.value = $redVal
+                    }
+                    $verCopy.element = $elCopy
+                    $entry.verification = $verCopy
+                } else {
+                    $entry.verification = $Result.verification
+                }
+            }
             if ($Result.path -and $Command -eq 'screenshot') { $entry.screenshot_path = $Result.path }
             if ($Result.text -and $Command -eq 'get-app-state') { $entry.tree_text = $Result.text }
             elseif ($Result.state_id -and $script:ZccLastSnapshotText -and $script:ZccLastSnapshotStateId -eq $Result.state_id) {
-                $entry.tree_after = $script:ZccLastSnapshotText
+                $treeAfter = [string]$script:ZccLastSnapshotText
+                foreach ($needle in $redactNeedles) {
+                    $treeAfter = $treeAfter.Replace($needle, '[REDACTED]')
+                }
+                $entry.tree_after = $treeAfter
             }
-            if ($env:CUA_TRAJECTORY_INCLUDE_TEXT -eq '1' -and $null -ne $script:ZccCurrentParams -and $null -ne $script:ZccCurrentParams.text) {
-                $entry.text = [string]$script:ZccCurrentParams.text
+            if ($includeText -and $null -ne $paramText) {
+                $entry.text = $paramText
             }
         }
         $line = ($entry | ConvertTo-Json -Compress -Depth 8) + "`n"
